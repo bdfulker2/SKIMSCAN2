@@ -9,7 +9,7 @@ import os
 import urllib
 import time
 import bluetooth
-import Adafruit_GPIO.SIP as SPI
+import Adafruit_GPIO.SPI as SPI
 import Adafruit_SSD1306
 from PIL import Image
 from PIL import ImageDraw
