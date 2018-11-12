@@ -45,7 +45,7 @@ ipAddress = "Hello Ben"
 macAddress = "What What"
 
 BT_RET_CHARACTER = 'M'
-BT_SEND_CHARACTER = 'P'
+BT_SEND_CHARACTER = "P"
 bluetooth_return_value = 0
 
 def attempt_connection():
