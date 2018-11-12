@@ -9,7 +9,7 @@ import os
 import urllib
 import time
 import bluetooth
-import Adafruit_GPIO.SIP as SPI
+import Adafruit_GPIO.SPI as SPI
 import Adafruit_SSD1306
 from PIL import Image
 from PIL import ImageDraw
@@ -49,6 +49,17 @@ BT_SEND_CHARACTER = 'P'
 bluetooth_return_value = 0
 
 def attempt_connection(BT_RET_CHARACTER):
+    #uuid = "eba2b472-e69c-11e8-847c-3b2a22f8eff6"
+    bd_addr = "B8:27:EB:8B:1D:38"
+    
+    port = 1
+    
+    sock=bluetooth.BluetoothSocket( bluetooth.RFCOMM )
+    sock.connect((bd_addr, port))
+    sock.send(BT_SEND_CHARACTER)
+    
+    sock.close()
+    
     server_sock=bluetooth.BluetoothSocket( bluetooth.RFCOMM )
 
     port = 1
@@ -60,9 +71,17 @@ def attempt_connection(BT_RET_CHARACTER):
 
     data = client_sock.recv(1024)
     print "received [%s]" % data
-
+    
     client_sock.close()
     server_sock.close()
+    
+    if(data == BT_RET_CHARACTER):
+        print( "Skimmer Found!!!")
+        print ("Skip This Pump!!")
+        #get_address()
+    else:
+        print ("Comm Not Possible or Not Skimmer Dev")
+        
     
 def check_internet_connect(): 
     try:
