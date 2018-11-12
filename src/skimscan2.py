@@ -48,7 +48,7 @@ BT_RET_CHARACTER = 'M'
 BT_SEND_CHARACTER = 'P'
 bluetooth_return_value = 0
 
-def attempt_connection(BT_RET_CHARACTER):
+def attempt_connection():
     #uuid = "eba2b472-e69c-11e8-847c-3b2a22f8eff6"
     bd_addr = "B8:27:EB:8B:1D:38"
     
