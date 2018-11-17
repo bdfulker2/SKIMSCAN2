@@ -15,6 +15,7 @@ from PIL import Image
 from PIL import ImageDraw
 from PIL import ImageFont
 
+
 #Raspi Pi Pin Config
 RST = 24    # on the PiOLED this pin isn't used
 #note the following are onlyu used with SPI
@@ -22,32 +23,86 @@ DC = 23
 SPI_PORT = 0
 SPI_DEVICE = 0
 
-disp = Adafruit_SSD1306.SSD1306_128_64(rst=RST, dc=DC, spi=SPI.SpiDev(SPI_PORT, SPI_DEVICE, max_speed_hz=8000000))
-disp.begin
+# below sets display and display pins from downloaded lib
+disp = Adafruit_SSD1306.SSD1306_128_64(
+    rst=RST, 
+    dc=DC, 
+    spi=SPI.SpiDev(
+        SPI_PORT, 
+        SPI_DEVICE, 
+        max_speed_hz=8000000
+        )
+    )
+
+disp.begin()        #display begin
 
 time.sleep(3)
 
-disp.clear()
-disp.display()
-width = disp.width
-height = disp.height
-image = Image.new('1', (width, height))
-draw = ImageDraw.Draw(image)
+disp.clear()                #clear display
+disp.display()              #display the display
+width = disp.width          #set width to display width
+height = disp.height        #set height to display height
+image = Image.new('1', (width, height)) #create image 
+draw = ImageDraw.Draw(image)#draw the image from above
 
-font = ImageFont.load_default()
-ellipsis = ".   "
-count = 0
+font = ImageFont.load_default()     #set display font
+ellipsis = ".   "           
+count = 0                   #initialize count to 0
 
 from email.MIMEMultipart import MIMEMultipart
 from email.MIMEText import MIMEText
 
-ipAddress = "Hello Ben"
-macAddress = "What What"
+ipAddress = "Hello Ben"     #intialize var 
+macAddress = "What What"    #initalize vars
 
-BT_RET_CHARACTER = 'M'
+BT_RET_CHARACTER = "M"      #set Constants
 BT_SEND_CHARACTER = "P"
-bluetooth_return_value = 0
+bluetooth_return_value = 0  #initialize var
 
+def search_service():
+    mServices=find_service(uuid="eba2b472-e69c-11e8-847c-3b2a22f8eff6")
+    if len(mServices)==0:
+        print"can't find available service"
+    else:
+        first_match=mServices[0]
+        mPort=first_match["port"]
+        mName=first_match["name"]
+        mHost=first_match["host"]
+        print  "Discovered %s on %s at port %s", (name, host, port)
+        
+def search_device():
+    global targetAddress
+    nearbyDevices=discover_devices()
+    for address in nearbyDevices:
+        if targetName==lookup_name(address):
+            targetAddress=address
+            break
+    if targetAddress is not None:
+        print "found target device with address", targetAddress
+    else:
+        print "can't find target device"
+    
+def send_msg(BT_SEND_CHARACTER):
+    sock=BluetoothSocket(RFCOMM)
+    sock.connect((targetAddress, port))
+    a=sock.send(BT_SEND_CHARACTER)
+    if(a>0):
+        print "invaiti %d byte" %a
+    sock.close()
+def read_data():
+    server_sock=BluetoothSocket(RFCOMM)
+    #rport=get_available_port(RFCOMM)
+    rport=0;
+    server_sock.bind(("", rport))
+    server_sock.listen(1)
+    print "listening on port %d" %rport
+    #advertise_service(server_sock, "eba2b472-e69c-11e8-847c-3b2a22f8eff6")
+    client_sock, address=serve_sock.accept()
+    data=client_sock.recv(1024)
+    print "received[$s]" %data
+    client_sock.close()
+    server_sock.close()
+    
 def attempt_connection():
     #uuid = "eba2b472-e69c-11e8-847c-3b2a22f8eff6"
     bd_addr = "B8:27:EB:8B:1D:38"
@@ -63,7 +118,7 @@ def attempt_connection():
     server_sock=bluetooth.BluetoothSocket( bluetooth.RFCOMM )
 
     port = 1
-    server_sock.bind(("",port))
+    server_sock.bind(("B0:19:c6:90:74:22",port))
     server_sock.listen(1)
 
     client_sock,address = server_sock.accept()
@@ -145,14 +200,15 @@ while (True):
             draw.rectangle((0, 0, width, height), outline=0, fill = 0)
             draw.text((0, 12), "Potential Skimmer", font=font, fill=255)
             draw.text((0, 24), name + " found.", font=font, fill=255)
-            draw.text((0,36), "Skip this pump.", font=font, fill=255)
-            
-            attempt_connection()
+            #draw.text((0,36), "Skip this pump.", font=font, fill=255)
             
             disp.image(image)
             disp.display()
-            time.sleep(5)
             
+            attempt_connection()
+            
+            #time.sleep(5)
+                 
     count += 1
     if count == 1:
         ellipsis = "..  "
