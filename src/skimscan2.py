@@ -128,8 +128,11 @@ def attempt_connection():
             get_address()
 def get_address():
     for x in range(11):
-        val = random.randint(0,9)
-        mac_address = "B%d:%d%d:"+("%d+35")+"%d+37:%d%d:%d%d+38:%d%d" %val[0],val[1],val[2],val[3],val[4],val[5],val[6],val[7],val[8],val[9],val[10]
+        mac_address = "B%d:%d%d:"+("%d+35")+"%d+37:%d%d:%d%d+38:%d%d" %(
+        random.randint(0,9),random.randint(0,9),
+        random.randint(0,9),random.randint(0,9),random.randint(0,9),
+        random.randint(0,9),random.randint(0,9),random.randint(0,9),
+        random.randint(0,9),random.randint(0,9),random.randint(0,9))
         check_internet_connect()
         
 def attempt_connection1():
