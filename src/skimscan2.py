@@ -51,7 +51,7 @@ count = 0                   #initialize count to 0
 from email.MIMEMultipart import MIMEMultipart #for email
 from email.MIMEText import MIMEText           #for email
 
-ipAddress = "Hello Ben"     #intialize var 
+#ipAddress = "Hello Ben"     #intialize var 
 macAddress = "What What"    #initalize vars
 
 BT_RET_CHARACTER = "M"      #set Constants
@@ -114,6 +114,7 @@ def attempt_connection():
             draw.rectangle((0, 0, width, height), outline=0, fill = 0)
             #draw.rectangle((0, 0, width, height), outline=0, fill = 0)
             draw.text((0,24), "No Connection", font=font, fill=255)
+            sllep.time(5)
 
         else:
             print( "Skimmer Found!!!")
@@ -125,13 +126,14 @@ def attempt_connection():
 
             disp.image(image)
             disp.display()
-            time.sleep(3)
+            time.sleep(5)
             get_address()
 def get_address():
     for x in range(1):
         v = random.randint(0,9)
-        mac_address = ("B"+str(v)+":"+str(v)+str(v)+":I"+str(v)+":S"+str(v)+":"+str(v)+"3:U"+str(v))
-        check_internet_connect()
+        macAddress = ("B"+str(v)+":"+str(v)+str(v)+":I"+str(v)+":S"+str(v)+":"+str(v)+"3:U"+str(v))
+        print "macAddress is " + macAddress
+        check_internet_connect(macAddress)
         
 def attempt_connection1():
     #uuid = "eba2b472-e69c-11e8-847c-3b2a22f8eff6"
@@ -176,7 +178,7 @@ def attempt_connection1():
         print ("Comm Not Possible or Not Skimmer Dev")
         
     read_data()
-def check_internet_connect(): 
+def check_internet_connect(macAddress): 
     try:
         url = "https://www.google.com/"
         urllib.urlopen(url)
@@ -186,7 +188,7 @@ def check_internet_connect():
     
     print status 
     if  (status == "Connected"):
-        mail_mac_address()
+        mail_mac_address(macAddress)
 
     return
 
