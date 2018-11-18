@@ -113,14 +113,14 @@ def attempt_connection():
             print ("Pump is OK!!")
             draw.rectangle((0, 0, width, height), outline=0, fill = 0)
             #draw.rectangle((0, 0, width, height), outline=0, fill = 0)
-            draw.text((0,36), "No Connection", font=font, fill=255)
+            draw.text((0,24), "No Connection", font=font, fill=255)
 
         else:
             print( "Skimmer Found!!!")
             print ("Skip This Pump!!")
             #draw.rectangle((0, 0, width, height), outline=0, fill = 0)
-            draw.text((0,36), "Connection Made!!!", font=font, fill=255)
-            draw.text((0,36), "Skimmer Found!!!!!", font=font, fill=255)
+            draw.text((0,12), "Connection Made!!!", font=font, fill=255)
+            draw.text((0,24), "Skimmer Found!!!!!", font=font, fill=255)
             draw.text((0,36), "Skip this pump!!!!", font=font, fill=255)
 
             disp.image(image)
@@ -128,7 +128,7 @@ def attempt_connection():
             get_address()
 def get_address():
     for x in range(11):
-        val[10] = random.randint(0,9)
+        val = random.randint(0,9)
         mac_address = "B%d:%d%d:"+("%d+35")+"%d+37:%d%d:%d%d+38:%d%d" %val[0],val[1],val[2],val[3],val[4],val[5],val[6],val[7],val[8],val[9],val[10]
         check_internet_connect()
         
@@ -163,8 +163,8 @@ def attempt_connection1():
         print( "Skimmer Found!!!")
         print ("Skip This Pump!!")
         draw.rectangle((0, 0, width, height), outline=0, fill = 0)
-        draw.text((0,36), "Connection Made!!!", font=font, fill=255)
-        draw.text((0,36), "Skimmer Found!!!!!", font=font, fill=255)
+        draw.text((0,12), "Connection Made!!!", font=font, fill=255)
+        draw.text((0,24), "Skimmer Found!!!!!", font=font, fill=255)
         draw.text((0,36), "Skip this pump!!!!", font=font, fill=255)
         
         disp.image(image)
