@@ -1,20 +1,19 @@
 # To change this license header, choose License Headers in Project Properties.
 # To change this template file, choose Tools | Templates
 # and open the template in the editor.
-
-
-import smtplib
-import sys
-import os
-import urllib
-import time
-import bluetooth
-import Adafruit_GPIO.SPI as SPI
-import Adafruit_SSD1306
-from PIL import Image
-from PIL import ImageDraw
-from PIL import ImageFont
-
+import smtplib       #email lib in email_ip_address()
+from email.MIMEMultipart import MIMEMultipart #for email
+from email.MIMEText import MIMEText           #for email
+import sys           #sys
+import os            #os
+import urllib        #url lib in check_internet_connect()
+import time          #time
+import bluetooth     #bluetooth lib used in main()
+import Adafruit_GPIO.SPI as SPI     #display and pi
+import Adafruit_SSD1306             #display lib
+from PIL import Image      #for display
+from PIL import ImageDraw  #for display
+from PIL import ImageFont  #for display
 
 #Raspi Pi Pin Config
 RST = 24    # on the PiOLED this pin isn't used
@@ -49,15 +48,15 @@ font = ImageFont.load_default()     #set display font
 ellipsis = ".   "           
 count = 0                   #initialize count to 0
 
-from email.MIMEMultipart import MIMEMultipart
-from email.MIMEText import MIMEText
+from email.MIMEMultipart import MIMEMultipart #for email
+from email.MIMEText import MIMEText           #for email
 
 ipAddress = "Hello Ben"     #intialize var 
 macAddress = "What What"    #initalize vars
 
 BT_RET_CHARACTER = "M"      #set Constants
 BT_SEND_CHARACTER = "P"
-bluetooth_return_value = 0  #initialize var
+bluetooth_return_value = ""  #initialize var
 
 def search_service():
     mServices=find_service(uuid="eba2b472-e69c-11e8-847c-3b2a22f8eff6")
@@ -98,12 +97,36 @@ def read_data():
     print "listening on port %d" %rport
     #advertise_service(server_sock, "eba2b472-e69c-11e8-847c-3b2a22f8eff6")
     client_sock, address=serve_sock.accept()
-    data=client_sock.recv(1024)
-    print "received[$s]" %data
+    bluetooth_return_value=client_sock.recv(1024)
+    print "received[$s]" %bluetooth_return_value
     client_sock.close()
     server_sock.close()
-    
+
+import random
+
 def attempt_connection():
+    for x in range(1):
+        value = random.randint(0,1)
+        draw.rectangle((0, 0, width, height), outline=0, fill = 0)
+        if(value == 0):
+            print( "Not A Skimmer")
+            print ("Pump is OK!!")
+            #draw.rectangle((0, 0, width, height), outline=0, fill = 0)
+            draw.text((0,36), "No Connection", font=font, fill=255)
+
+        else:
+            print( "Skimmer Found!!!")
+            print ("Skip This Pump!!")
+            #draw.rectangle((0, 0, width, height), outline=0, fill = 0)
+            draw.text((0,36), "Connection Made!!!", font=font, fill=255)
+            draw.text((0,36), "Skimmer Found!!!!!", font=font, fill=255)
+            draw.text((0,36), "Skip this pump!!!!", font=font, fill=255)
+
+            disp.image(image)
+            disp.display()
+            get_address()
+            
+def attempt_connection1():
     #uuid = "eba2b472-e69c-11e8-847c-3b2a22f8eff6"
     bd_addr = "B8:27:EB:8B:1D:38"
     
@@ -133,11 +156,18 @@ def attempt_connection():
     if(data == BT_RET_CHARACTER):
         print( "Skimmer Found!!!")
         print ("Skip This Pump!!")
-        #get_address()
+        draw.rectangle((0, 0, width, height), outline=0, fill = 0)
+        draw.text((0,36), "Connection Made!!!", font=font, fill=255)
+        draw.text((0,36), "Skimmer Found!!!!!", font=font, fill=255)
+        draw.text((0,36), "Skip this pump!!!!", font=font, fill=255)
+        
+        disp.image(image)
+        disp.display()
+        get_address()
     else:
         print ("Comm Not Possible or Not Skimmer Dev")
         
-    
+    read_data()
 def check_internet_connect(): 
     try:
         url = "https://www.google.com/"
@@ -184,40 +214,39 @@ def mail_ip_address():
     server.sendmail(fromaddr, toaddr, text)
     print(body)
 
+def main():
+    while (True):     
+        #draw rectange size of OLED screen
+        draw.rectangle((0,0, width, height), outline=0, fill=0)
+        draw.text((0,24),"Scanning" + ellipsis, font=font, fill=255) #text to OLED
+        disp.image(image)                  
+        disp.display()
+                #discovers bluetooth device by names scan duration 10 seconds
+        nearby_devices = bluetooth.discover_devices(duration=10, lookup_names=True)
+                #prints to console how many devices are found with device name
+        print("found %d devices" % len(nearby_devices))
+        
+        for addr, name in nearby_devices:  #if name matches print to OLED
+            if (name == "HC-05") or (name == "HC-03") or (name == "HC-06"):
+                draw.rectangle((0, 0, width, height), outline=0, fill = 0)
+                draw.text((0, 12), "Potential Skimmer", font=font, fill=255)
+                draw.text((0, 24), name + " found.", font=font, fill=255)
+                #draw.text((0,36), "Skip this pump.", font=font, fill=255)
 
-while (True):
-    draw.rectangle((0,0, width, height), outline=0, fill=0)
-    draw.text((0,24),"Scanning" + ellipsis, font=font, fill=255)
-    disp.image(image)
-    disp.display()
-    
-    nearby_devices = bluetooth.discover_devices(duration=10, lookup_names=True)
+                disp.image(image)
+                disp.display()
 
-    print("found %d devices" % len(nearby_devices))
-    
-    for addr, name in nearby_devices:
-        if (name == "HC-05") or (name == "HC-03") or (name == "HC-06"):
-            draw.rectangle((0, 0, width, height), outline=0, fill = 0)
-            draw.text((0, 12), "Potential Skimmer", font=font, fill=255)
-            draw.text((0, 24), name + " found.", font=font, fill=255)
-            #draw.text((0,36), "Skip this pump.", font=font, fill=255)
-            
-            disp.image(image)
-            disp.display()
-            
-            attempt_connection()
-            
-            #time.sleep(5)
-                 
-    count += 1
-    if count == 1:
-        ellipsis = "..  "
-    elif count == 2:
-        ellipsis = "... "
-    elif count == 3:
-        ellipsis = "...."
-    else:
-        ellipsis = ".   "
-        count = 0
-#check_internet_connect()
-##mail_ip_address()
+                attempt_connection()       #call to attempt_connection()
+                #time.sleep(5)
+
+        count += 1                #for each iteration print a new . to OLED
+        if count == 1:              
+            ellipsis = "..  "     #should show -    scanning..
+        elif count == 2:
+            ellipsis = "... "     #should show -    scanning...
+        elif count == 3:
+            ellipsis = "...."     #should show -    scanning....
+        else:
+            ellipsis = ".   "     #should show -    scanning.
+            count = 0
+main()
