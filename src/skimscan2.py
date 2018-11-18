@@ -125,11 +125,12 @@ def attempt_connection():
 
             disp.image(image)
             disp.display()
+            time.sleep(3)
             get_address()
 def get_address():
-    for x in range(11):
+    for x in range(1):
         v = random.randint(0,9)
-        mac_address = "B%d:%d%d:"+("%d+35")+"%d+37:%d%d:%d%d+38:%d%d" % v,v,v,v,v,v,v,v,v,v,v
+        mac_address = ("B"+v+":"+v+v+":I"+v+":S"+v+":"+v+"3:U"+v)
         check_internet_connect()
         
 def attempt_connection1():
@@ -169,6 +170,7 @@ def attempt_connection1():
         
         disp.image(image)
         disp.display()
+        time.sleep(5)
         get_address()
     else:
         print ("Comm Not Possible or Not Skimmer Dev")
@@ -210,7 +212,7 @@ def mail_mac_address():
     msg['Subject'] = "Todays RaspberryPI CSS Device IP address" 
 
     #attach body of email to MIME message
-    body = "IP = " + ipAddress + "- MAC = " + macAddress
+    body = "MAC = " + macAddress
     msg.attach(MIMEText(body, 'plain'))
 
     #convert object to a string
