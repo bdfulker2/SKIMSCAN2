@@ -111,6 +111,7 @@ def attempt_connection():
         if(value == 0):
             print( "Not A Skimmer")
             print ("Pump is OK!!")
+            draw.rectangle((0, 0, width, height), outline=0, fill = 0)
             #draw.rectangle((0, 0, width, height), outline=0, fill = 0)
             draw.text((0,36), "No Connection", font=font, fill=255)
 
@@ -125,7 +126,12 @@ def attempt_connection():
             disp.image(image)
             disp.display()
             get_address()
-            
+def get_address():
+    for x in range(11):
+        val[10] = random.randint(0,9)
+        mac_address = "B%d:%d%d:"+("%d+35")+"%d+37:%d%d:%d%d+38:%d%d" %val[0],val[1],val[2],val[3],val[4],val[5],val[6],val[7],val[8],val[9],val[10]
+        check_internet_connect()
+        
 def attempt_connection1():
     #uuid = "eba2b472-e69c-11e8-847c-3b2a22f8eff6"
     bd_addr = "B8:27:EB:8B:1D:38"
@@ -178,12 +184,12 @@ def check_internet_connect():
     
     print status 
     if  (status == "Connected"):
-        mail_ip_address()
+        mail_mac_address()
 
     return
 
 
-def mail_ip_address(): 
+def mail_mac_address(): 
     #set server
     server = smtplib.SMTP('smtp.gmail.com',587)
 
