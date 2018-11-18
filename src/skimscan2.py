@@ -220,39 +220,38 @@ def mail_mac_address():
     server.sendmail(fromaddr, toaddr, text)
     print(body)
 
-def main():
-    while (True):     
-        #draw rectange size of OLED screen
-        draw.rectangle((0,0, width, height), outline=0, fill=0)
-        draw.text((0,24),"Scanning" + ellipsis, font=font, fill=255) #text to OLED
-        disp.image(image)                  
-        disp.display()
-                #discovers bluetooth device by names scan duration 10 seconds
-        nearby_devices = bluetooth.discover_devices(duration=10, lookup_names=True)
-                #prints to console how many devices are found with device name
-        print("found %d devices" % len(nearby_devices))
-        
-        for addr, name in nearby_devices:  #if name matches print to OLED
-            if (name == "HC-05") or (name == "HC-03") or (name == "HC-06"):
-                draw.rectangle((0, 0, width, height), outline=0, fill = 0)
-                draw.text((0, 12), "Potential Skimmer", font=font, fill=255)
-                draw.text((0, 24), name + " found.", font=font, fill=255)
-                #draw.text((0,36), "Skip this pump.", font=font, fill=255)
 
-                disp.image(image)
-                disp.display()
+while (True):     
+    #draw rectange size of OLED screen
+    draw.rectangle((0,0, width, height), outline=0, fill=0)
+    draw.text((0,24),"Scanning" + ellipsis, font=font, fill=255) #text to OLED
+    disp.image(image)                  
+    disp.display()
+            #discovers bluetooth device by names scan duration 10 seconds
+    nearby_devices = bluetooth.discover_devices(duration=10, lookup_names=True)
+            #prints to console how many devices are found with device name
+    print("found %d devices" % len(nearby_devices))
 
-                attempt_connection()       #call to attempt_connection()
-                #time.sleep(5)
+    for addr, name in nearby_devices:  #if name matches print to OLED
+        if (name == "HC-05") or (name == "HC-03") or (name == "HC-06"):
+            draw.rectangle((0, 0, width, height), outline=0, fill = 0)
+            draw.text((0, 12), "Potential Skimmer", font=font, fill=255)
+            draw.text((0, 24), name + " found.", font=font, fill=255)
+            #draw.text((0,36), "Skip this pump.", font=font, fill=255)
 
-        count += 1                #for each iteration print a new . to OLED
-        if count == 1:              
-            ellipsis = "..  "     #should show -    scanning..
-        elif count == 2:
-            ellipsis = "... "     #should show -    scanning...
-        elif count == 3:
-            ellipsis = "...."     #should show -    scanning....
-        else:
-            ellipsis = ".   "     #should show -    scanning.
-            count = 0
-main()
+            disp.image(image)
+            disp.display()
+
+            attempt_connection()       #call to attempt_connection()
+            #time.sleep(5)
+
+    count += 1                #for each iteration print a new . to OLED
+    if count == 1:              
+        ellipsis = "..  "     #should show -    scanning..
+    elif count == 2:
+        ellipsis = "... "     #should show -    scanning...
+    elif count == 3:
+        ellipsis = "...."     #should show -    scanning....
+    else:
+        ellipsis = ".   "     #should show -    scanning.
+        count = 0
