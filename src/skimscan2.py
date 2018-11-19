@@ -1,6 +1,7 @@
 # To change this license header, choose License Headers in Project Properties.
 # To change this template file, choose Tools | Templates
 # and open the template in the editor.
+#from gattlib import*
 import smtplib       #email lib in email_ip_address()
 from email.MIMEMultipart import MIMEMultipart #for email
 from email.MIMEText import MIMEText           #for email
@@ -14,7 +15,8 @@ import Adafruit_SSD1306             #display lib
 from PIL import Image      #for display
 from PIL import ImageDraw  #for display
 from PIL import ImageFont  #for display
-from bluetooth.ble import DiscoveryService
+#from bluetooth.ble import DiscoveryService
+
 #Raspi Pi Pin Config
 RST = 24    # on the PiOLED this pin isn't used
 #note the following are onlyu used with SPI
@@ -103,7 +105,7 @@ def read_data():
 
 import random
 
-def attempt_connection():
+def attempt_connection(macAddress):
     for x in range(1):    #select one random number
         value = random.randint(0,3) #limit the range of the int to be 0 and 3
         
@@ -114,7 +116,7 @@ def attempt_connection():
             #draw.rectangle((0, 0, width, height), outline=0, fill = 0)
             draw.text((0,24), "No Connection", font=font, fill=255)#text-4-OLED
             time.sleep(5)       #sleep so text stays on OLED
-
+            return
         else:                       #if number is 1,2, or 3
             print( "Skimmer Found!!!")      #print to console
             print ("Skip This Pump!!")      #print to console
@@ -127,37 +129,45 @@ def attempt_connection():
             disp.image(image)
             disp.display()          #display to OLED
             time.sleep(5)           #sleep so text stays on screen for 5 secs   
-            get_address()           # call to get_address() method
-            
-            
-def get_address():  #randomized get_address() to used to simulate BT_MAC
-    for x in range(1):    #get 1 val randomized between 0 and 9
-        v = random.randint(0,9)  
-                            #set semi random bluetooth MAC address
-        macAddress = ("B"+str(v)+":"+ str(v)+str(v)+":I"+str(v)+
-                            ":S"+str(v)+":"+str(v)+"3:U"+str(v))
-        print "macAddress is " + macAddress  #print to console for testing
-        check_internet_connect(macAddress)  #call check_internet_connect 
+            save_address(macAddress)
  
-def get_address2():
-    service = DiscoveryService()    #set servie to Discovery serve
+def save_address(macAddress):
+    import datetime                 #import date and time
+    now = datetime.datetime.now()   #assign datetime.now to now
+    file_name = "SkimmerDeviceAddresses"    #file name
+    file = open(file_name, "a")             #open file and append
+    write("MAC = " + macAddress + "-" + now.month+"/"+now.day+"/"+now.year +
+                "-" + now.hour+":"+now.min)         #write sting to file
+    file.close()                    #close file
+    check_internet_connect(macAddress)
+    
+#def get_address():  #randomized get_address() to used to simulate BT_MAC
+#    for x in range(1):    #get 1 val randomized between 0 and 9
+#        v = random.randint(0,9)  
+#                            #set semi random bluetooth MAC address
+#        macAddress = ("B"+str(v)+":"+ str(v)+str(v)+":I"+str(v)+
+#                            ":S"+str(v)+":"+str(v)+"3:U"+str(v))
+#        print "macAddress is " + macAddress  #print to console for testing
+#        check_internet_connect(macAddress)  #call check_internet_connect 
+ 
+#def get_address2():
+#    service = DiscoveryService()    #set servie to Discovery serve
 
-    devices = service.discover(2)   #discover upto 2 devices store in devices
+ #   devices = service.discover(2)   #discover upto 2 devices store in devices
 
-    for address, name in devices.items():   
-        print("name: {}, address: {}".format(name, address)) #print format
-        if (name == "HC-05") or (name == "HC-03") or (name == "HC-06"):
-            macAddress = address        #set address to macAddress
-            print "in get_address2() the macAddress = " + macAddress #output
-           
-            check_internet_connect(macAddress) #call to check_internet_connect
-        else:                   #if device name doesnt match
-            print "Address not recovered"      #print address not recovered
+#    for address, name in devices.items():   
+#        print("name: {}, address: {}".format(name, address)) #print format
+#        if (name == "HC-05") or (name == "HC-03") or (name == "HC-06"):
+#            macAddress = address        #set address to macAddress
+#            print "in get_address2() the macAddress = " + macAddress #output
+#           
+#            check_internet_connect(macAddress) #call to check_internet_connect
+#        else:                   #if device name doesnt match
+#            print "Address not recovered"      #print address not recovered
             
-    return                                     #return to scanning
+#    return                                     #return to scanning
     
-    
-def attempt_connection1():
+def attempt_connection1(macAddress):
     #uuid = "eba2b472-e69c-11e8-847c-3b2a22f8eff6"
     bd_addr = "B8:27:EB:8B:1D:38"
     
@@ -172,7 +182,7 @@ def attempt_connection1():
     server_sock=bluetooth.BluetoothSocket( bluetooth.RFCOMM )
 
     port = 1
-    server_sock.bind(("B0:19:c6:90:74:22",port))
+    server_sock.bind((macAddress,port))
     server_sock.listen(1)
 
     client_sock,address = server_sock.accept()
@@ -252,23 +262,22 @@ while (True):
     nearby_devices = bluetooth.discover_devices(duration=10, lookup_names=True)
             #prints to console how many devices are found with device name
     print("found %d devices" % len(nearby_devices))
-
+            #addr captures bluetooth device MAC address
     for addr, name in nearby_devices:  #if name matches print to OLED
         if (name == "HC-05") or (name == "HC-03") or (name == "HC-06"):
             draw.rectangle((0, 0, width, height), outline=0, fill = 0)
             draw.text((0, 12), "Potential Skimmer", font=font, fill=255)
             draw.text((0, 24), name + " found.", font=font, fill=255)
-            #draw.text((0,36), "Skip this pump.", font=font, fill=255)
+            draw.text((0,36), addr, font=font, fill=255)
             
-            macAddress = addr
-            print ("Main: macAddress = " + macAddress)
+            macAddress = addr               #assign Bluetooth addr to macAddress
+            print ("Main: macAddress = " + macAddress)         #print to console
             
             disp.image(image)
             disp.display()
 
-            attempt_connection()       #call to attempt_connection()
-            #time.sleep(5)
-
+            attempt_connection(macAddress)       #call to attempt_connection()
+            #time.sleep(5)                       #with macAddress as parameter
     count += 1                #for each iteration print a new . to OLED
     if count == 1:              
         ellipsis = "..  "     #should show -    scanning..
