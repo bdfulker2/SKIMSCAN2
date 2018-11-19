@@ -14,7 +14,7 @@ import Adafruit_SSD1306             #display lib
 from PIL import Image      #for display
 from PIL import ImageDraw  #for display
 from PIL import ImageFont  #for display
-
+from bluetooth.ble import DiscoveryService
 #Raspi Pi Pin Config
 RST = 24    # on the PiOLED this pin isn't used
 #note the following are onlyu used with SPI
@@ -51,7 +51,6 @@ count = 0                   #initialize count to 0
 from email.MIMEMultipart import MIMEMultipart #for email
 from email.MIMEText import MIMEText           #for email
 
-#ipAddress = "Hello Ben"     #intialize var 
 macAddress = "What What"    #initalize vars
 
 BT_RET_CHARACTER = "M"      #set Constants
@@ -105,36 +104,59 @@ def read_data():
 import random
 
 def attempt_connection():
-    for x in range(1):
-        value = random.randint(0,1)
-        draw.rectangle((0, 0, width, height), outline=0, fill = 0)
-        if(value == 0):
-            print( "Not A Skimmer")
-            print ("Pump is OK!!")
-            draw.rectangle((0, 0, width, height), outline=0, fill = 0)
+    for x in range(1):    #select one random number
+        value = random.randint(0,3) #limit the range of the int to be 0 and 3
+        
+        if(value == 0):             #if value of random.randint is 0
+            print( "Not A Skimmer")     #print to console not a skimmer
+            print ("Pump is OK!!")      #print to console not a skimmer
+            draw.rectangle((0, 0, width, height), outline=0, fill = 0)#set OLED
             #draw.rectangle((0, 0, width, height), outline=0, fill = 0)
-            draw.text((0,24), "No Connection", font=font, fill=255)
-            sllep.time(5)
+            draw.text((0,24), "No Connection", font=font, fill=255)#text-4-OLED
+            time.sleep(5)       #sleep so text stays on OLED
 
-        else:
-            print( "Skimmer Found!!!")
-            print ("Skip This Pump!!")
-            #draw.rectangle((0, 0, width, height), outline=0, fill = 0)
+        else:                       #if number is 1,2, or 3
+            print( "Skimmer Found!!!")      #print to console
+            print ("Skip This Pump!!")      #print to console
+            draw.rectangle((0, 0, width, height), outline=0, fill = 0)#set OLED
+                #print text to OLED 12=line 1, 24 = line 2, 36 line 3 of OLED
             draw.text((0,12), "Connection Made!!!", font=font, fill=255)
             draw.text((0,24), "Skimmer Found!!!!!", font=font, fill=255)
             draw.text((0,36), "Skip this pump!!!!", font=font, fill=255)
 
             disp.image(image)
-            disp.display()
-            time.sleep(5)
-            get_address()
-def get_address():
-    for x in range(1):
-        v = random.randint(0,9)
-        macAddress = ("B"+str(v)+":"+str(v)+str(v)+":I"+str(v)+":S"+str(v)+":"+str(v)+"3:U"+str(v))
-        print "macAddress is " + macAddress
-        check_internet_connect(macAddress)
-        
+            disp.display()          #display to OLED
+            time.sleep(5)           #sleep so text stays on screen for 5 secs   
+            get_address()           # call to get_address() method
+            
+            
+def get_address():  #randomized get_address() to used to simulate BT_MAC
+    for x in range(1):    #get 1 val randomized between 0 and 9
+        v = random.randint(0,9)  
+                            #set semi random bluetooth MAC address
+        macAddress = ("B"+str(v)+":"+ str(v)+str(v)+":I"+str(v)+
+                            ":S"+str(v)+":"+str(v)+"3:U"+str(v))
+        print "macAddress is " + macAddress  #print to console for testing
+        check_internet_connect(macAddress)  #call check_internet_connect 
+ 
+def get_address2():
+    service = DiscoveryService()    #set servie to Discovery serve
+
+    devices = service.discover(2)   #discover upto 2 devices store in devices
+
+    for address, name in devices.items():   
+        print("name: {}, address: {}".format(name, address)) #print format
+        if (name == "HC-05") or (name == "HC-03") or (name == "HC-06"):
+            macAddress = address        #set address to macAddress
+            print "in get_address2() the macAddress = " + macAddress #output
+           
+            check_internet_connect(macAddress) #call to check_internet_connect
+        else:                   #if device name doesnt match
+            print "Address not recovered"      #print address not recovered
+            
+    return                                     #return to scanning
+    
+    
 def attempt_connection1():
     #uuid = "eba2b472-e69c-11e8-847c-3b2a22f8eff6"
     bd_addr = "B8:27:EB:8B:1D:38"
@@ -178,51 +200,46 @@ def attempt_connection1():
         print ("Comm Not Possible or Not Skimmer Dev")
         
     read_data()
-def check_internet_connect(macAddress): 
-    try:
-        url = "https://www.google.com/"
-        urllib.urlopen(url)
-        status = "Connected"
-    except urllib2.URLError, e:
-        status = "Not connected"
     
-    print status 
-    if  (status == "Connected"):
-        mail_mac_address(macAddress)
-
+def check_internet_connect(macAddress):   #method to check internet connection
+    try:
+        url = "https://www.google.com/"     #using google.com as url to test
+        urllib.urlopen(url)                 #uses urllib to open a url
+        status = "Connected"                #assign status = connected
+    except urllib2.URLError, e:             #exception URLError
+        status = "Not connected"            #if url error status = not connected
+    
+    print status                            #print status to console
+    if  (status == "Connected"):            #if status is still connected
+        mail_mac_address(macAddress)        #call to mail_mac_address
+                                            #with parameter of macAddress
     return
 
 
-def mail_mac_address(): 
-    #set server
-    server = smtplib.SMTP('smtp.gmail.com',587)
-
-    #Connect to Server
-    server.ehlo()
+def mail_mac_address(macAddress): 
+    
+    server = smtplib.SMTP('smtp.gmail.com',587) #set server google smtp port=587
+                                    
+    server.ehlo()                               #Connect to Server
     server.starttls()
     
+    
+    server.login('skimscanfgcu', 'Skimscan1!')  #Login to Server with my cr
+                                                
+    fromaddr = "skimscanfgcu@gmail.com"         #set message Header
+    toaddr = "skimscanfgcu@gmail.com"           #set message Header
+    msg = MIMEMultipart()                       #set message Header multipart
+    msg['From'] = fromaddr                      #set message Header from addr
+    msg['To'] = toaddr                          #set message Header to address
+    msg['Subject'] = "Todays RaspberryPI CSS Device MAC address" #set Subject
 
-    #Login to Server
-    server.login('skimscanfgcu', 'Skimscan1!')
-
-    #set message Header
-    fromaddr = "skimscanfgcu@gmail.com"
-    toaddr = "skimscanfgcu@gmail.com"
-    msg = MIMEMultipart()
-    msg['From'] = fromaddr
-    msg['To'] = toaddr
-    msg['Subject'] = "Todays RaspberryPI CSS Device IP address" 
-
-    #attach body of email to MIME message
-    body = "MAC = " + macAddress
+    body = "MAC = " + macAddress           #attach body of email to MIME message
     msg.attach(MIMEText(body, 'plain'))
 
-    #convert object to a string
-    text = msg.as_string()
+    text = msg.as_string()                      #convert object msg to a string
 
-    #send email message
-    server.sendmail(fromaddr, toaddr, text)
-    print(body)
+    server.sendmail(fromaddr, toaddr, text)     #send email message
+    print(body)                                 #print body to console
 
 
 while (True):     
@@ -242,7 +259,10 @@ while (True):
             draw.text((0, 12), "Potential Skimmer", font=font, fill=255)
             draw.text((0, 24), name + " found.", font=font, fill=255)
             #draw.text((0,36), "Skip this pump.", font=font, fill=255)
-
+            
+            macAddress = addr
+            print ("Main: macAddress = " + macAddress)
+            
             disp.image(image)
             disp.display()
 
