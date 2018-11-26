@@ -129,15 +129,16 @@ def attempt_connection(macAddress):
             disp.image(image)
             disp.display()          #display to OLED
             time.sleep(5)           #sleep so text stays on screen for 5 secs   
-            save_address(macAddress)
+            save_address(macAddress)    #call to save_address() macAddress param
  
 def save_address(macAddress):
     import datetime                 #import date and time
     now = datetime.datetime.now()   #assign datetime.now to now
-    file_name = "SkimmerDeviceAddresses"    #file name
+    file_name = "SkimmerDeviceAddresses.txt"    #file name
     file = open(file_name, "a")             #open file and append
-    write("MAC = " + macAddress + "-" + now.month+"/"+now.day+"/"+now.year +
-                "-" + now.hour+":"+now.min)         #write sting to file
+    file.write("\nMAC = " + macAddress + "-" + 
+                str(now.month)+"/"+str(now.day)+"/"+str(now.year) +
+                "-" + str(now.hour)+":"+str(now.minute))   #write sting to file
     file.close()                    #close file
     check_internet_connect(macAddress)
     
@@ -166,50 +167,99 @@ def save_address(macAddress):
 #            print "Address not recovered"      #print address not recovered
             
 #    return                                     #return to scanning
+def server():
     
+    try:
+        server_sock=bluetooth.BluetoothSocket( bluetooth.RFCOMM )
+
+        port = 1
+        server_sock.bind(("",port))
+        server_sock.listen(1)
+
+        client_sock,address = server_sock.accept()
+        print "Accepted connection from ",address
+
+        data = client_sock.recv(1024)
+        print "received [%s]" % data
+
+        client_sock.close()
+        server_sock.close()
+        if(data == 'P'):
+            client()
+
+    except:
+        print "server bluetooth error"
+        return
+            
+def client():
+    try:
+        bd_addr = "B8:27:EB:8B:1D:38"
+
+        port = 1
+
+        sock=bluetooth.BluetoothSocket( bluetooth.RFCOMM )
+        sock.connect((bd_addr, port))
+
+        sock.send("M")
+
+        sock.close()
+        server()
+    except:
+        print "client bluetooth error"
+        return
+    
+def attempt_connection2(macAddress):
+    client()
 def attempt_connection1(macAddress):
-    #uuid = "eba2b472-e69c-11e8-847c-3b2a22f8eff6"
-    bd_addr = "B8:27:EB:8B:1D:38"
-    
-    port = 1
-    
-    sock=bluetooth.BluetoothSocket( bluetooth.RFCOMM )
-    sock.connect((bd_addr, port))
-    sock.send(BT_SEND_CHARACTER)
-    
-    sock.close()
-    
-    server_sock=bluetooth.BluetoothSocket( bluetooth.RFCOMM )
+   
+    try: 
+        #uuid = "eba2b472-e69c-11e8-847c-3b2a22f8eff6"
+        bd_addr = "B8:27:EB:8B:1D:38"
 
-    port = 1
-    server_sock.bind((macAddress,port))
-    server_sock.listen(1)
+        port = 1
 
-    client_sock,address = server_sock.accept()
-    print "Accepted connection from ",address
+        sock=bluetooth.BluetoothSocket( bluetooth.RFCOMM )
+        sock.connect((bd_addr, port))
+        sock.send(BT_SEND_CHARACTER)
 
-    data = client_sock.recv(1024)
-    print "received [%s]" % data
+        sock.close()
+    except:
+        print "exception"
     
-    client_sock.close()
-    server_sock.close()
-    
-    if(data == BT_RET_CHARACTER):
-        print( "Skimmer Found!!!")
-        print ("Skip This Pump!!")
-        draw.rectangle((0, 0, width, height), outline=0, fill = 0)
-        draw.text((0,12), "Connection Made!!!", font=font, fill=255)
-        draw.text((0,24), "Skimmer Found!!!!!", font=font, fill=255)
-        draw.text((0,36), "Skip this pump!!!!", font=font, fill=255)
-        
-        disp.image(image)
-        disp.display()
-        time.sleep(5)
-        get_address()
-    else:
-        print ("Comm Not Possible or Not Skimmer Dev")
-        
-    read_data()
+    try:
+        server_sock=bluetooth.BluetoothSocket( bluetooth.RFCOMM )
+
+        port = 1
+        server_sock.bind((macAddress,port))
+        server_sock.listen(1)
+
+        client_sock,address = server_sock.accept()
+        print "Accepted connection from ",address
+
+        data = client_sock.recv(1024)
+        print "received [%s]" % data
+
+        client_sock.close()
+        server_sock.close()
+
+        if(data == BT_RET_CHARACTER):
+            print( "Skimmer Found!!!")
+            print ("Skip This Pump!!")
+            draw.rectangle((0, 0, width, height), outline=0, fill = 0)
+            draw.text((0,12), "Connection Made!!!", font=font, fill=255)
+            draw.text((0,24), "Skimmer Found!!!!!", font=font, fill=255)
+            draw.text((0,36), "Skip this pump!!!!", font=font, fill=255)
+
+            disp.image(image)
+            disp.display()
+            time.sleep(5)
+            get_address()
+        else:
+            print ("Comm Not Possible or Not Skimmer Dev")
+
+        read_data()
+    except:
+        print "exception"
     
 def check_internet_connect(macAddress):   #method to check internet connection
     try:
@@ -270,14 +320,22 @@ while (True):
             draw.text((0, 24), name + " found.", font=font, fill=255)
             draw.text((0,36), addr, font=font, fill=255)
             
+            disp.image(image)
+            disp.display()
+            time.sleep(5)
+            
             macAddress = addr               #assign Bluetooth addr to macAddress
             print ("Main: macAddress = " + macAddress)         #print to console
+            attempt_connection(macAddress)       #call to attempt_connection()
+                                                 #with macAddress as parameter
+        else:
+            draw.rectangle((0, 0, width, height), outline=0, fill = 0)
+            draw.text((0, 12), "Device Not Found", font=font, fill=255)
             
             disp.image(image)
             disp.display()
-
-            attempt_connection(macAddress)       #call to attempt_connection()
-            #time.sleep(5)                       #with macAddress as parameter
+            time.sleep(5)
+            
     count += 1                #for each iteration print a new . to OLED
     if count == 1:              
         ellipsis = "..  "     #should show -    scanning..
