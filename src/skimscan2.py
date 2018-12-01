@@ -1,12 +1,31 @@
-# To change this license header, choose License Headers in Project Properties.
-# To change this template file, choose Tools | Templates
-# and open the template in the editor.
-#from gattlib import*
+#Author: Ben Fulker
+#Last Edited: 11/30/2018
+#This software is an adaptation from Tyler Winegarner raspi_skimcan.py 
+#Retrived from github on 9/30/2018: 
+#  https://github.com/photoresistor/raspi_skimscan/blob/master/raspi_skimscan.py
+#desc: scans for local bluetooth devices with names matching the description 
+#   of those used in cas pump credit card skimmers. When a potential skimmer 
+#   with the specified HC-03, HC-05, or HC-06 is found the Bluetooth MAC address
+#   is captured. Then the software attempts to connect to potential skimmer 
+#   devices using the Bluetooth RFCOMM protocol. If a connection is made the 
+#   character "P" is sent to the potential skimmer. If the potential skimmer 
+#   returns the character "M" then it is likely a skimmer. The MAC address is 
+#   then stored on the devices local text file database. The software then
+#   check if the device is currently connected to its home Wi-Fi network and if
+#   it is connected it will email the captured MAC address to a specified
+#   email address.
+#       This software is directly derived from the research done by Nathan 
+#       Seidle as documented in this article: 
+#                       https://learn.sparkfun.com/tutorials/gas-pump-skimmers
+# 
+
+
 import smtplib       #email lib in email_ip_address()
 from email.MIMEMultipart import MIMEMultipart #for email
 from email.MIMEText import MIMEText           #for email
 import sys           #sys
 import os            #os
+import random
 import urllib        #url lib in check_internet_connect()
 import time          #time
 import bluetooth     #bluetooth lib used in main()
@@ -19,7 +38,7 @@ from PIL import ImageFont  #for display
 
 #Raspi Pi Pin Config
 RST = 24    # on the PiOLED this pin isn't used
-#note the following are onlyu used with SPI
+#note the following are only used with SPI
 DC = 23
 SPI_PORT = 0
 SPI_DEVICE = 0
@@ -50,87 +69,49 @@ font = ImageFont.load_default()     #set display font
 ellipsis = ".   "           
 count = 0                   #initialize count to 0
 
-from email.MIMEMultipart import MIMEMultipart #for email
-from email.MIMEText import MIMEText           #for email
-
 macAddress = "What What"    #initalize vars
 
 BT_RET_CHARACTER = "M"      #set Constants
 BT_SEND_CHARACTER = "P"
 bluetooth_return_value = ""  #initialize var
 
-def search_service():
-    mServices=find_service(uuid="eba2b472-e69c-11e8-847c-3b2a22f8eff6")
-    if len(mServices)==0:
-        print"can't find available service"
-    else:
-        first_match=mServices[0]
-        mPort=first_match["port"]
-        mName=first_match["name"]
-        mHost=first_match["host"]
-        print  "Discovered %s on %s at port %s", (name, host, port)
+
+
+############################used for testing only###############################
+#import random
+
+#def attempt_connection(macAddress):
+#    for x in range(1):    #select one random number
+#        value = random.randint(0,3) #limit the range of the int to be 0 and 3
         
-def search_device():
-    global targetAddress
-    nearbyDevices=discover_devices()
-    for address in nearbyDevices:
-        if targetName==lookup_name(address):
-            targetAddress=address
-            break
-    if targetAddress is not None:
-        print "found target device with address", targetAddress
-    else:
-        print "can't find target device"
-    
-def send_msg(BT_SEND_CHARACTER):
-    sock=BluetoothSocket(RFCOMM)
-    sock.connect((targetAddress, port))
-    a=sock.send(BT_SEND_CHARACTER)
-    if(a>0):
-        print "invaiti %d byte" %a
-    sock.close()
-def read_data():
-    server_sock=BluetoothSocket(RFCOMM)
-    #rport=get_available_port(RFCOMM)
-    rport=0;
-    server_sock.bind(("", rport))
-    server_sock.listen(1)
-    print "listening on port %d" %rport
-    #advertise_service(server_sock, "eba2b472-e69c-11e8-847c-3b2a22f8eff6")
-    client_sock, address=serve_sock.accept()
-    bluetooth_return_value=client_sock.recv(1024)
-    print "received[$s]" %bluetooth_return_value
-    client_sock.close()
-    server_sock.close()
+#        if(value == 0):             #if value of random.randint is 0
+#            print( "Not A Skimmer")     #print to console not a skimmer
+#           print ("Pump is OK!!")      #print to console not a skimmer
+#            print_oled("", ("No Connection"), "", False)
+#            return
+#        else:                       #if number is 1,2, or 3
+#            print( "Skimmer Found!!!")      #print to console
+#            print ("Skip This Pump!!")      #print to console
+            
+#            print_oled("Connection Made!!!", ("Skimmer Found!!!!!"), 
+#                                                   "Skip this pump!!!!", False) 
+#            save_address(macAddress)   #call to save_address() macAddress param
+################################################################################ 
 
-import random
+######################### was used for testing##################################    
+#def get_address():  #randomized get_address() to used to simulate BT_MAC
+#    for x in range(1):    #get 1 val randomized between 0 and 9
+#        v = random.randint(0,9)  
+#                            #set semi random bluetooth MAC address
+#        macAddress = ("B"+str(v)+":"+ str(v)+str(v)+":I"+str(v)+
+#                            ":S"+str(v)+":"+str(v)+"3:U"+str(v))
+#        print "macAddress is " + macAddress  #print to console for testing
+#        check_internet_connect(macAddress)  #call check_internet_connect 
+################################################################################ 
 
-def attempt_connection(macAddress):
-    for x in range(1):    #select one random number
-        value = random.randint(0,3) #limit the range of the int to be 0 and 3
-        
-        if(value == 0):             #if value of random.randint is 0
-            print( "Not A Skimmer")     #print to console not a skimmer
-            print ("Pump is OK!!")      #print to console not a skimmer
-            draw.rectangle((0, 0, width, height), outline=0, fill = 0)#set OLED
-            #draw.rectangle((0, 0, width, height), outline=0, fill = 0)
-            draw.text((0,24), "No Connection", font=font, fill=255)#text-4-OLED
-            time.sleep(5)       #sleep so text stays on OLED
-            return
-        else:                       #if number is 1,2, or 3
-            print( "Skimmer Found!!!")      #print to console
-            print ("Skip This Pump!!")      #print to console
-            draw.rectangle((0, 0, width, height), outline=0, fill = 0)#set OLED
-                #print text to OLED 12=line 1, 24 = line 2, 36 line 3 of OLED
-            draw.text((0,12), "Connection Made!!!", font=font, fill=255)
-            draw.text((0,24), "Skimmer Found!!!!!", font=font, fill=255)
-            draw.text((0,36), "Skip this pump!!!!", font=font, fill=255)
-
-            disp.image(image)
-            disp.display()          #display to OLED
-            time.sleep(5)           #sleep so text stays on screen for 5 secs   
-            save_address(macAddress)    #call to save_address() macAddress param
- 
+#The save_address method opens the SkimmerDeviceAddresses.txt file and appends
+#to the file the found Devices MAC address along with the current time according 
+#of the raspberry pi zero w
 def save_address(macAddress):
     import datetime                 #import date and time
     now = datetime.datetime.now()   #assign datetime.now to now
@@ -141,34 +122,25 @@ def save_address(macAddress):
                 "-" + str(now.hour)+":"+str(now.minute))   #write sting to file
     file.close()                    #close file
     check_internet_connect(macAddress)
-    
-#def get_address():  #randomized get_address() to used to simulate BT_MAC
-#    for x in range(1):    #get 1 val randomized between 0 and 9
-#        v = random.randint(0,9)  
-#                            #set semi random bluetooth MAC address
-#        macAddress = ("B"+str(v)+":"+ str(v)+str(v)+":I"+str(v)+
-#                            ":S"+str(v)+":"+str(v)+"3:U"+str(v))
-#        print "macAddress is " + macAddress  #print to console for testing
-#        check_internet_connect(macAddress)  #call check_internet_connect 
- 
-#def get_address2():
-#    service = DiscoveryService()    #set servie to Discovery serve
 
- #   devices = service.discover(2)   #discover upto 2 devices store in devices
-
-#    for address, name in devices.items():   
-#        print("name: {}, address: {}".format(name, address)) #print format
-#        if (name == "HC-05") or (name == "HC-03") or (name == "HC-06"):
-#            macAddress = address        #set address to macAddress
-#            print "in get_address2() the macAddress = " + macAddress #output
-#           
-#            check_internet_connect(macAddress) #call to check_internet_connect
-#        else:                   #if device name doesnt match
-#            print "Address not recovered"      #print address not recovered
-            
-#    return                                     #return to scanning
-def server():
+# This method attempts to connect to the the potential skimmer device and send
+#the character "P" to it using bluetooth RFCOMM protocol
+def attempt_connection1(macAddress):
     
+    port = 1                                              #set port to 1  
+                                                         
+    sock=bluetooth.BluetoothSocket( bluetooth.RFCOMM )    #set socket to RFCOMM
+    sock.connect(("", port))               #connect sock to port and MAC address
+    sock.send(BT_SEND_CHARACTER)           # sends character to other device
+
+    sock.close()                           #closes the socket
+    
+    server(macAddress)                     #call to server method
+
+#server method recieves and data sent back over from other device over the 
+#RFCOMM protocol if the character "M" is sent back it is most likely a skimmer
+#device
+def server(macAddress): 
     try:
         server_sock=bluetooth.BluetoothSocket( bluetooth.RFCOMM )
 
@@ -184,83 +156,27 @@ def server():
 
         client_sock.close()
         server_sock.close()
-        if(data == 'P'):
-            client()
-
-    except:
-        print "server bluetooth error"
-        return
-            
-def client():
-    try:
-        bd_addr = "B8:27:EB:8B:1D:38"
-
-        port = 1
-
-        sock=bluetooth.BluetoothSocket( bluetooth.RFCOMM )
-        sock.connect((bd_addr, port))
-
-        sock.send("M")
-
-        sock.close()
-        server()
-    except:
-        print "client bluetooth error"
-        return
-    
-def attempt_connection2(macAddress):
-    client()
-def attempt_connection1(macAddress):
-   
-    try: 
-        #uuid = "eba2b472-e69c-11e8-847c-3b2a22f8eff6"
-        bd_addr = "B8:27:EB:8B:1D:38"
-
-        port = 1
-
-        sock=bluetooth.BluetoothSocket( bluetooth.RFCOMM )
-        sock.connect((bd_addr, port))
-        sock.send(BT_SEND_CHARACTER)
-
-        sock.close()
-    except:
-        print "exception"
-    
-    try:
-        server_sock=bluetooth.BluetoothSocket( bluetooth.RFCOMM )
-
-        port = 1
-        server_sock.bind((macAddress,port))
-        server_sock.listen(1)
-
-        client_sock,address = server_sock.accept()
-        print "Accepted connection from ",address
-
-        data = client_sock.recv(1024)
-        print "received [%s]" % data
-
-        client_sock.close()
-        server_sock.close()
 
         if(data == BT_RET_CHARACTER):
             print( "Skimmer Found!!!")
             print ("Skip This Pump!!")
-            draw.rectangle((0, 0, width, height), outline=0, fill = 0)
-            draw.text((0,12), "Connection Made!!!", font=font, fill=255)
-            draw.text((0,24), "Skimmer Found!!!!!", font=font, fill=255)
-            draw.text((0,36), "Skip this pump!!!!", font=font, fill=255)
-
-            disp.image(image)
-            disp.display()
-            time.sleep(5)
-            get_address()
+            
+            print_oled("Connection Made!!!", ("Skimmer Found!!!!!"), 
+                                                    "Skip this pump!!!!", False)
+            
+            save_address(macAddress)
         else:
             print ("Comm Not Possible or Not Skimmer Dev")
 
-        read_data()
+        
     except:
-        print "exception"
-    
+        print "exception bluetooth sever error"
+        sys.stderr.write("server bluetooth error")
+        sys.exit(1)
+        return
+  
+#The check_internet_connect method try's to check if there is Wi-Fi connection 
+#to a specified URL to verify that it is connect to the internet 
 def check_internet_connect(macAddress):   #method to check internet connection
     try:
         url = "https://www.google.com/"     #using google.com as url to test
@@ -275,19 +191,28 @@ def check_internet_connect(macAddress):   #method to check internet connection
                                             #with parameter of macAddress
     return
 
-
+#The mail_mac_address method connects to an smtp server with the users specified
+#email user_name and password. It then sends an email to the that same account 
+#with the found skimmer device Bluetooth MAC address using a multippart format. 
 def mail_mac_address(macAddress): 
     
-    server = smtplib.SMTP('smtp.gmail.com',587) #set server google smtp port=587
+###############user to update with there email information######################
+    user_name = 'skimscanfgcu'                        #email user name for login
+    password = 'Skimscan1!'                           #email password for login
+    email_address = "skimscanfgcu@gmail.com"          #full string email address
+    smtp_server = 'smtp.gmail.com'                    #smtp server for google
+    smtp_port = 587                                   #smtp port for google
+################################################################################
+    
+    server = smtplib.SMTP(smtp_server,smtp_port)#set server google smtp port=587
                                     
     server.ehlo()                               #Connect to Server
     server.starttls()
     
-    
-    server.login('skimscanfgcu', 'Skimscan1!')  #Login to Server with my cr
+    server.login(user_name, password)  #Login to Server with my cr
                                                 
-    fromaddr = "skimscanfgcu@gmail.com"         #set message Header
-    toaddr = "skimscanfgcu@gmail.com"           #set message Header
+    fromaddr = email_address                    #set message Header
+    toaddr = email_address                      #set message Header
     msg = MIMEMultipart()                       #set message Header multipart
     msg['From'] = fromaddr                      #set message Header from addr
     msg['To'] = toaddr                          #set message Header to address
@@ -301,13 +226,25 @@ def mail_mac_address(macAddress):
     server.sendmail(fromaddr, toaddr, text)     #send email message
     print(body)                                 #print body to console
 
+#The print_oled method takes three variables line_one, line_two, line_three, and
+#no_sleep. Line one two and three are the three seperate lines used on the OLED
+#The no_sleep variable is a boolean that allows it to sleep and keep output on 
+#the display and to slow the system
+def print_oled(line_one, line_two, line_three, no_sleep):
+    draw.rectangle((0, 0, width, height), outline=0, fill = 0)
+    draw.text((0, 12), line_one, font=font, fill=255)
+    draw.text((0, 24), line_two, font=font, fill=255)
+    draw.text((0,36), line_three, font=font, fill=255)
+            
+    disp.image(image)
+    disp.display()
+    if no_sleep == False:
+        time.sleep(5)
+    return
 
 while (True):     
     #draw rectange size of OLED screen
-    draw.rectangle((0,0, width, height), outline=0, fill=0)
-    draw.text((0,24),"Scanning" + ellipsis, font=font, fill=255) #text to OLED
-    disp.image(image)                  
-    disp.display()
+    print_oled("", ("Scanning" + ellipsis), "", True)
             #discovers bluetooth device by names scan duration 10 seconds
     nearby_devices = bluetooth.discover_devices(duration=10, lookup_names=True)
             #prints to console how many devices are found with device name
@@ -315,26 +252,15 @@ while (True):
             #addr captures bluetooth device MAC address
     for addr, name in nearby_devices:  #if name matches print to OLED
         if (name == "HC-05") or (name == "HC-03") or (name == "HC-06"):
-            draw.rectangle((0, 0, width, height), outline=0, fill = 0)
-            draw.text((0, 12), "Potential Skimmer", font=font, fill=255)
-            draw.text((0, 24), name + " found.", font=font, fill=255)
-            draw.text((0,36), addr, font=font, fill=255)
-            
-            disp.image(image)
-            disp.display()
-            time.sleep(5)
+           
+            print_oled("Potential Skimmer", (name + " found."), addr, False)
             
             macAddress = addr               #assign Bluetooth addr to macAddress
-            print ("Main: macAddress = " + macAddress)         #print to console
-            attempt_connection(macAddress)       #call to attempt_connection()
+            #print ("Main: macAddress = " + macAddress)        #print to console
+            attempt_connection1(macAddress)       #call to attempt_connection()
                                                  #with macAddress as parameter
         else:
-            draw.rectangle((0, 0, width, height), outline=0, fill = 0)
-            draw.text((0, 12), "Device Not Found", font=font, fill=255)
-            
-            disp.image(image)
-            disp.display()
-            time.sleep(5)
+            print_oled("", ("Device Not Found"), "", False)
             
     count += 1                #for each iteration print a new . to OLED
     if count == 1:              
