@@ -128,14 +128,17 @@ def save_address(macAddress):
 def attempt_connection1(macAddress):
     
     port = 1                                              #set port to 1  
-                                                         
-    sock=bluetooth.BluetoothSocket( bluetooth.RFCOMM )    #set socket to RFCOMM
-    sock.connect(("", port))               #connect sock to port and MAC address
-    sock.send(BT_SEND_CHARACTER)           # sends character to other device
+    try:                                                     
+        sock=bluetooth.BluetoothSocket( bluetooth.RFCOMM )    #set socket to RFCOMM
+        sock.connect((macAddress, port))               #connect sock to port and MAC address
+        sock.send(BT_SEND_CHARACTER)           # sends character to other device
 
-    sock.close()                           #closes the socket
+        sock.close()                           #closes the socket
     
-    server(macAddress)                     #call to server method
+        server(macAddress)                     #call to server method
+    except:
+        print "Communication not possible"
+        return
 
 #server method recieves and data sent back over from other device over the 
 #RFCOMM protocol if the character "M" is sent back it is most likely a skimmer
@@ -242,9 +245,12 @@ def print_oled(line_one, line_two, line_three, no_sleep):
         time.sleep(5)
     return
 
-while (True):     
+while (True):   
+    timerBool = False                               #boolean for timer
     #draw rectange size of OLED screen
     print_oled("", ("Scanning" + ellipsis), "", True)
+                            #to start timer for devices found and not found time
+    start_timer = time.time()
             #discovers bluetooth device by names scan duration 10 seconds
     nearby_devices = bluetooth.discover_devices(duration=10, lookup_names=True)
             #prints to console how many devices are found with device name
@@ -252,7 +258,13 @@ while (True):
             #addr captures bluetooth device MAC address
     for addr, name in nearby_devices:  #if name matches print to OLED
         if (name == "HC-05") or (name == "HC-03") or (name == "HC-06"):
-           
+            
+            device_found_timer = time.time()
+            timerBool = True
+            
+            print "Device Found in " + str(device_found_timer - start_timer) 
+            + " seconds"
+            
             print_oled("Potential Skimmer", (name + " found."), addr, False)
             
             macAddress = addr               #assign Bluetooth addr to macAddress
@@ -263,6 +275,11 @@ while (True):
             print_oled("", ("Device Not Found"), "", False)
             
     count += 1                #for each iteration print a new . to OLED
+    if(timerBool == False):
+        not_found_timer = time.time()
+        print "Device Not Found Time is "+str(not_found_timer-start_timer) 
+        + " seconds"
+        
     if count == 1:              
         ellipsis = "..  "     #should show -    scanning..
     elif count == 2:

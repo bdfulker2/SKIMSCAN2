@@ -45,7 +45,7 @@ def client(address):
     port = 1                                #set port = 1
                                             #set socket to RFCOMM
     sock=bluetooth.BluetoothSocket( bluetooth.RFCOMM )
-    sock.connect(("", port))    #connect socket to port and other device address
+    sock.connect((bd_addr, port))    #connect socket to port and other device address
 
     sock.send(BT_SEND_CHARACTER)            #send return char to server method
                                             #on the CSS device
