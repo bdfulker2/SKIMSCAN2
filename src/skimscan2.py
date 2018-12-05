@@ -129,8 +129,8 @@ def attempt_connection1(macAddress):
     
     port = 1                                              #set port to 1  
     try:                                                     
-        sock=bluetooth.BluetoothSocket( bluetooth.RFCOMM )    #set socket to RFCOMM
-        sock.connect((macAddress, port))               #connect sock to port and MAC address
+        sock=bluetooth.BluetoothSocket( bluetooth.RFCOMM ) #set socket to RFCOMM
+        sock.connect((macAddress, port))   #connect sock to port and MAC address
         sock.send(BT_SEND_CHARACTER)           # sends character to other device
 
         sock.close()                           #closes the socket
@@ -200,13 +200,15 @@ def check_internet_connect(macAddress):   #method to check internet connection
 def mail_mac_address(macAddress): 
     
 ###############user to update with there email information######################
-    user_name = 'skimscanfgcu'                        #email user name for login
-    password = 'Skimscan1!'                           #email password for login
-    email_address = "skimscanfgcu@gmail.com"          #full string email address
+    user_name = 'yourUserName'                        #email user name for login
+    password = 'yourPassword'                         #email password for login
+    email_address = "yourEmailAddress@gmail.com"      #full string email address
     smtp_server = 'smtp.gmail.com'                    #smtp server for google
     smtp_port = 587                                   #smtp port for google
 ################################################################################
-    
+    user_name = 'skimscanfgcu'                        #email user name for login
+    password = 'Skimscan1!'                           #email password for login
+    email_address = "skimscanfgcu@gmail.com"          #full string email address
     server = smtplib.SMTP(smtp_server,smtp_port)#set server google smtp port=587
                                     
     server.ehlo()                               #Connect to Server
@@ -262,8 +264,8 @@ while (True):
             device_found_timer = time.time()
             timerBool = True
             
-            print "Device Found in " + str(device_found_timer - start_timer) 
-            + " seconds"
+            print ("Device Found in " + str(device_found_timer - start_timer) 
+                    + " seconds")
             
             print_oled("Potential Skimmer", (name + " found."), addr, False)
             
@@ -277,8 +279,9 @@ while (True):
     count += 1                #for each iteration print a new . to OLED
     if(timerBool == False):
         not_found_timer = time.time()
-        print "Device Not Found Time is "+str(not_found_timer-start_timer) 
-        + " seconds"
+        print ("Device Not Found Time is "+str(not_found_timer-start_timer) 
+                + " seconds")
+        print_oled("", ("Device Not Found"), "", True)
         
     if count == 1:              
         ellipsis = "..  "     #should show -    scanning..
